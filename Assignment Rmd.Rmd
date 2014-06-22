@@ -1,0 +1,52 @@
+---
+title: "Assignment"
+author: "Ilde"
+date: "Sunday, June 22, 2014"
+output: html_document
+---
+
+```{r, message=FALSE}
+library(caret)
+```
+
+Load data
+
+```{r}
+train<-read.csv("C:/Applied ML/pml-training.csv",na.strings=c("NA","#DIV/0!"))
+```
+
+Some Pre processing. Discard variables with too many NAs and useless variables. Only kept 54 variables.
+
+```{r}
+indexna<-apply(train,2,function(x) sum(is.na(x)))
+train<-train[,!indexna>19000]
+index.remove <- grep("timestamp|X|user_name|new_window",names(train))
+train.final<-train[,-index.remove]
+```
+
+Model Training,decided to use random forest due to classification nature and due to poor performance by rpart method. Chose cross validation as the resampling method due to time consumption when running the default bootstrap method in the train function. 
+
+```{r}
+modelFit<-train(classe~.,data=train.final,method="rf",trControl=trainControl(method="cv",number=5))
+
+modelFit
+
+table1<-table(train.final$classe,predict(modelFit,train.final))
+
+print(table1)
+```
+
+Incredibly accurate results. This likely means that it's possible to reduce the variables quite a bit but since the model ran in a very moderate time I don't feel it's necessary. The predictions for the test are as follows:
+
+```{r}
+test<-read.csv("C:/Applied ML/pml-testing.csv",na.strings=c("NA","#DIV/0!"))
+
+test<-test[,!indexna>19000]
+test.final<-test[,-index.remove]
+predictions<-predict(modelFit, test.final)
+
+print(predictions)
+
+
+```
+
